@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37710.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartHelpDesk.API", "SmartHelpDesk.API\SmartHelpDesk.API.csproj", "{20F1C7A6-8F59-41D3-910A-E7E91B4DEF79}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartHelpdesk.BLL", "SmartHelpdesk.BLL\SmartHelpdesk.BLL.csproj", "{3794A3D5-0847-48D5-962D-D0670A13C6F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartHelpdesk.DAL", "SmartHelpdesk.DAL\SmartHelpdesk.DAL.csproj", "{261C680C-7E07-4C64-B12A-0F12353D5FAC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartHelpdesk.Common", "SmartHelpdesk.Common\SmartHelpdesk.Common.csproj", "{C4A469DE-92B5-460A-A66E-CF14D96AC182}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		.editorconfig = .editorconfig
+		Dockerfile = Dockerfile
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{20F1C7A6-8F59-41D3-910A-E7E91B4DEF79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20F1C7A6-8F59-41D3-910A-E7E91B4DEF79}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20F1C7A6-8F59-41D3-910A-E7E91B4DEF79}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20F1C7A6-8F59-41D3-910A-E7E91B4DEF79}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3794A3D5-0847-48D5-962D-D0670A13C6F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3794A3D5-0847-48D5-962D-D0670A13C6F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3794A3D5-0847-48D5-962D-D0670A13C6F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3794A3D5-0847-48D5-962D-D0670A13C6F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{261C680C-7E07-4C64-B12A-0F12353D5FAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{261C680C-7E07-4C64-B12A-0F12353D5FAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{261C680C-7E07-4C64-B12A-0F12353D5FAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{261C680C-7E07-4C64-B12A-0F12353D5FAC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4A469DE-92B5-460A-A66E-CF14D96AC182}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4A469DE-92B5-460A-A66E-CF14D96AC182}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4A469DE-92B5-460A-A66E-CF14D96AC182}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4A469DE-92B5-460A-A66E-CF14D96AC182}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2B2AD862-CE11-4FF7-A477-C2D2F971DC84}
+	EndGlobalSection
+EndGlobal
