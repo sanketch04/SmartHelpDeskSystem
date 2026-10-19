@@ -116,11 +116,11 @@ If AI classification is enabled, the backend and its configured AI service must 
 ### 1. Clone the Repository
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone <https://github.com/sanketch04/SmartHelpDeskSystem.git>
 cd SmartHelpDesk.Client
 ```
 
-Replace `<YOUR_REPOSITORY_URL>` with your GitHub repository URL.
+Replace `<https://github.com/sanketch04/SmartHelpDeskSystem.git>` with your GitHub repository URL.
 
 ### 2. Install Dependencies
 
