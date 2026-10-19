@@ -1,0 +1,27 @@
+<section class="ai-page">
+  <header class="page-header"><div><p class="eyebrow">SMART AUTOMATION</p><h1>AI ticket assistant</h1><p class="subtitle">Use AI to summarize an issue and suggest a category and priority before you submit it.</p></div><a routerLink="/tickets/create" class="back-button">Create a ticket →</a></header>
+  <div class="ai-layout">
+    <form class="ai-form-card" [formGroup]="form" (ngSubmit)="classify()">
+      <div class="card-heading"><span class="ai-mark">✦</span><div><h2>Describe the issue</h2><p>AI suggestions are advisory. Review them before using them.</p></div></div>
+      <label>Issue title<input formControlName="title" maxlength="200" placeholder="Example: Unable to sign in to the company portal"></label>
+      @if (form.controls.title.touched && form.controls.title.invalid) { <small class="field-error">Enter a title with at least 3 characters.</small> }
+      <label>Issue description<textarea formControlName="description" rows="7" maxlength="5000" placeholder="Explain what happened, what you expected, and any error messages…"></textarea></label>
+      @if (form.controls.description.touched && form.controls.description.invalid) { <small class="field-error">Enter a description with at least 5 characters.</small> }
+      <div class="form-footer"><small>{{ form.controls.description.value?.length ?? 0 }} / 5000 characters</small><button class="primary-button" type="submit" [disabled]="isLoading">{{ isLoading ? 'Analysing…' : '✦ Analyse issue' }}</button></div>
+      @if (errorMessage) { <div class="notice error" role="alert">{{ errorMessage }}</div> }
+    </form>
+    <aside class="ai-result-card">
+      <p class="eyebrow">AI ANALYSIS</p><h2>Your recommendations</h2>
+      @if (isLoading) { <div class="analysis-loading"><span class="spinner"></span><p>Reviewing the issue details…</p></div> }
+      @else if (result) {
+        <div class="result-pills"><span class="result-pill">{{ result.suggestedCategory }}</span><span class="result-pill priority-pill" [class.critical]="result.suggestedPriority === 'Critical' || result.suggestedPriority === 'High'">{{ result.suggestedPriority }} priority</span></div>
+        <div class="result-section"><span>SUMMARY</span><p>{{ result.summary }}</p></div>
+        <div class="result-section"><span>WHY THIS SUGGESTION</span><p>{{ result.reason }}</p></div>
+        <a routerLink="/tickets/create" class="primary-button">Continue to ticket creation →</a>
+      } @else {
+        <div class="result-placeholder"><span>✧</span><h3>Ready when you are</h3><p>Enter a title and description, then analyse the issue to receive recommendations.</p></div>
+      }
+      <div class="ai-disclaimer"><span>i</span><p><strong>Human review required</strong><small>AI does not create tickets or change data automatically.</small></p></div>
+    </aside>
+  </div>
+</section>

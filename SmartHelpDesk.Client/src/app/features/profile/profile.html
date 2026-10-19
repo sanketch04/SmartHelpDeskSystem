@@ -1,0 +1,29 @@
+<section class="profile-page">
+  <header class="page-header"><div><p class="eyebrow">ACCOUNT SETTINGS</p><h1>My profile</h1><p class="subtitle">Manage your profile image and view your account information.</p></div></header>
+  <div class="profile-layout">
+    <section class="profile-card">
+      <div class="profile-hero">
+        @if (profileImageUrl) { <img class="profile-image" [src]="profileImageUrl" alt="Your profile image"> }
+        @else { <span class="profile-placeholder">{{ auth.getCurrentUser()?.fullName?.charAt(0) || 'U' }}</span> }
+        <h2>{{ auth.getCurrentUser()?.fullName || 'User' }}</h2><p>{{ auth.getCurrentUser()?.email }}</p>
+        <span class="role-chip">{{ auth.isAdministrator() ? 'Administrator' : auth.isSupportAgent() ? 'Support Agent' : 'Employee' }}</span>
+      </div>
+      <div class="profile-info">
+        <div><span>Full name</span><strong>{{ auth.getCurrentUser()?.fullName || 'Not available' }}</strong></div>
+        <div><span>Email address</span><strong>{{ auth.getCurrentUser()?.email || 'Not available' }}</strong></div>
+        <div><span>User ID</span><strong class="user-id">{{ auth.getCurrentUser()?.userId || 'Not available' }}</strong></div>
+        <div><span>Session expires</span><strong>{{ auth.getCurrentUser()?.expiresAtUtc | date:'dd MMM yyyy, h:mm a' }}</strong></div>
+      </div>
+    </section>
+    <section class="image-card">
+      <span class="image-card-icon">◎</span><h2>Profile image</h2><p>Use a clear image so your support team can recognize your account.</p>
+      <label class="file-picker">Choose image<input type="file" accept="image/jpeg,image/png,image/webp" (change)="onFileSelected($event)"></label>
+      @if (selectedFile) { <div class="selected-file"><strong>{{ selectedFile.name }}</strong><small>{{ (selectedFile.size / 1024 / 1024) | number:'1.1-2' }} MB selected</small></div> }
+      <small class="requirements">JPEG, PNG, or WebP · Maximum 5 MB</small>
+      <button type="button" class="primary-button upload-button" (click)="uploadImage()" [disabled]="!selectedFile || isUploading">{{ isUploading ? 'Uploading…' : 'Upload profile image' }}</button>
+      @if (errorMessage) { <p class="notice error" role="alert">{{ errorMessage }}</p> }
+      @if (successMessage) { <p class="notice success" role="status">{{ successMessage }}</p> }
+    </section>
+  </div>
+  <p class="profile-note">Account roles and permissions are managed by the SmartHelpDesk backend. This page does not allow users to change their own role.</p>
+</section>

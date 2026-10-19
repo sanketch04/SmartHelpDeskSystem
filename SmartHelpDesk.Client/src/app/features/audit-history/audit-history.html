@@ -1,0 +1,19 @@
+<section class="audit-page">
+  <header class="page-header"><div><p class="eyebrow">GOVERNANCE & TRACEABILITY</p><h1>Audit history</h1><p class="subtitle">Review recorded ticket activity across the helpdesk.</p></div><button type="button" class="refresh-button" (click)="load()" [disabled]="isLoading">{{ isLoading ? 'Loading…' : 'Refresh activity' }}</button></header>
+  <section class="audit-card">
+    <div class="audit-toolbar"><div><h2>Activity log</h2><p>{{ events.length }} recorded {{ events.length === 1 ? 'event' : 'events' }}</p></div><label class="search-box"><span>⌕</span><input type="search" [(ngModel)]="searchTerm" placeholder="Search activity, actor, or ticket"></label></div>
+    @if (isLoading) { <div class="audit-state"><span class="spinner"></span><p>Collecting ticket activity…</p></div> }
+    @else if (errorMessage) { <div class="audit-state error" role="alert"><h3>Audit history unavailable</h3><p>{{ errorMessage }}</p><button type="button" class="primary-button" (click)="load()">Try again</button></div> }
+    @else if (filteredEvents.length === 0) { <div class="audit-state"><span class="empty-icon">≋</span><h3>No matching activity</h3><p>Try another search term or check back after tickets have changed.</p></div> }
+    @else {
+      <div class="audit-list">
+        @for (event of filteredEvents; track event.id) {
+          <article class="audit-row">
+            <span class="audit-marker" aria-hidden="true"></span>
+            <div class="audit-main"><div class="audit-title-line"><span class="action-chip">{{ getActionLabel(event.action) }}</span><time>{{ event.createdAt | date:'dd MMM yyyy, h:mm a' }}</time></div><h3>{{ event.description || 'Ticket activity recorded' }}</h3><a [routerLink]="['/tickets', event.ticketId]" class="audit-ticket">#{{ event.ticketId }} · {{ event.ticketTitle }} <span>Open ticket →</span></a><div class="audit-actor"><span class="actor-avatar">{{ getInitial(event.performedByUserName) }}</span><span><strong>{{ event.performedByUserName || 'Support team member' }}</strong><small>Performed this action</small></span></div></div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</section>

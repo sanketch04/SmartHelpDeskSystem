@@ -1,0 +1,147 @@
+
+<div class="login-page">
+  <section class="login-brand-panel">
+    <a class="brand" routerLink="/login">
+      <span class="brand-logo">S</span>
+      <span>SmartHelpDesk</span>
+    </a>
+
+    <div class="brand-message">
+      <div class="eyebrow">YOUR SUPPORT WORKSPACE</div>
+      <h1>Better support.<br />Smarter resolutions.</h1>
+      <p>
+        Manage requests, collaborate with your team, and let AI help you
+        resolve issues efficiently.
+      </p>
+
+      <div class="feature-list">
+        <div><span>✓</span> Centralized ticket management</div>
+        <div><span>✓</span> AI-powered ticket classification</div>
+        <div><span>✓</span> Secure, role-based access</div>
+      </div>
+    </div>
+
+    <div class="brand-footer">
+      © SmartHelpDesk
+      <span>Built for better support experiences</span>
+    </div>
+
+    <div class="decor-circle circle-one"></div>
+    <div class="decor-circle circle-two"></div>
+  </section>
+
+  <section class="login-form-panel">
+    <div class="mobile-brand">
+      <span class="brand-logo">S</span>
+      <strong>SmartHelpDesk</strong>
+    </div>
+
+    <div class="login-card">
+      <div class="form-eyebrow">WELCOME BACK</div>
+      <h2>Sign in to your account</h2>
+      <p class="form-description">
+        Enter your account details to access your workspace.
+      </p>
+
+      @if (errorMessage) {
+        <div class="error-banner" role="alert">
+          <span class="error-symbol">!</span>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+
+      <form [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+        <div class="form-field">
+          <label for="email">Email address</label>
+
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="you@company.com"
+            autocomplete="username"
+            [class.invalid]="
+              loginForm.controls.email.touched &&
+              loginForm.controls.email.invalid
+            "
+          />
+
+          @if (
+            loginForm.controls.email.touched &&
+            loginForm.controls.email.hasError('required')
+          ) {
+            <span class="field-error">Email address is required.</span>
+          } @else if (
+            loginForm.controls.email.touched &&
+            loginForm.controls.email.hasError('email')
+          ) {
+            <span class="field-error">Enter a valid email address.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <div class="label-row">
+            <label for="password">Password</label>
+          </div>
+
+          <div class="password-wrapper">
+            <input
+              id="password"
+              [type]="passwordVisible ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              [class.invalid]="
+                loginForm.controls.password.touched &&
+                loginForm.controls.password.invalid
+              "
+            />
+
+            <button
+              class="password-toggle"
+              type="button"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="passwordVisible ? 'Hide password' : 'Show password'"
+            >
+              {{ passwordVisible ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+
+          @if (
+            loginForm.controls.password.touched &&
+            loginForm.controls.password.hasError('required')
+          ) {
+            <span class="field-error">Password is required.</span>
+          }
+        </div>
+
+        <button
+          class="submit-button"
+          type="submit"
+          [disabled]="loading"
+        >
+          @if (loading) {
+            <span class="spinner"></span>
+            Signing in...
+          } @else {
+            Sign in <span aria-hidden="true">→</span>
+          }
+        </button>
+      </form>
+
+      <div class="security-note">
+        <span>▣</span>
+        Your connection is protected by secure authentication.
+      </div>
+
+      <p class="register-prompt">
+        Don't have an account?
+        <a routerLink="/register">Create an account</a>
+      </p>
+    </div>
+
+    <div class="form-footer">
+      Secure access to your support workspace
+    </div>
+  </section>
+</div>

@@ -1,0 +1,296 @@
+
+:host {
+  display: block;
+  flex: 0 0 252px;
+  min-width: 0;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  width: 252px;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  padding: 24px 15px 16px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #111827;
+  color: #d1d5db;
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 2px 8px 28px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #818cf8, #4f46e5);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 850;
+  box-shadow: 0 5px 16px #4f46e540;
+}
+
+.brand-copy,
+.sidebar-user-copy,
+.security-note div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-copy strong {
+  font-size: 14px;
+  letter-spacing: -0.2px;
+}
+
+.brand-copy small {
+  color: #9ca3af;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.25px;
+}
+
+.workspace-label {
+  padding: 0 11px 10px;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #b8c0ce;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-item:hover {
+  background: #1f2937;
+  color: #fff;
+}
+
+.nav-item.active {
+  border-color: #3730a3;
+  background: #312e81;
+  color: #fff;
+  box-shadow: inset 3px 0 #818cf8;
+}
+
+.nav-icon {
+  display: inline-grid;
+  width: 19px;
+  flex: 0 0 19px;
+  place-items: center;
+  color: #9ca3af;
+  font-size: 17px;
+}
+
+.nav-item.active .nav-icon {
+  color: #c7d2fe;
+}
+
+.nav-add {
+  margin-left: auto;
+  color: #a5b4fc;
+  font-size: 18px;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.security-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 4px 16px;
+  padding: 12px 10px;
+  border: 1px solid #273244;
+  border-radius: 10px;
+  background: #182131;
+}
+
+.security-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 8px;
+  background: #064e3b;
+  color: #6ee7b7;
+  font-size: 14px;
+}
+
+.security-note strong {
+  color: #e5e7eb;
+  font-size: 10px;
+}
+
+.security-note small {
+  color: #9ca3af;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 15px 6px 0;
+  border-top: 1px solid #283244;
+  color: inherit;
+  text-decoration: none;
+}
+
+.user-avatar {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 50%;
+  background: #3730a3;
+  color: #e0e7ff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.user-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.sidebar-user-copy {
+  overflow: hidden;
+}
+
+.sidebar-user-copy strong {
+  overflow: hidden;
+  color: #f3f4f6;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-copy small {
+  color: #9ca3af;
+  font-size: 10px;
+}
+
+/* Compact desktop and tablet */
+@media (min-width: 651px) and (max-width: 1000px) {
+  :host {
+    flex-basis: 220px;
+  }
+
+  .sidebar {
+    width: 220px;
+    padding-inline: 11px;
+  }
+
+  .brand-copy strong {
+    font-size: 13px;
+  }
+
+  .nav-item {
+    gap: 9px;
+    padding-inline: 9px;
+  }
+}
+
+/* Mobile: sidebar becomes a full-width drawer when opened.
+   The app shell controls whether it is visible. */
+@media (max-width: 650px) {
+  :host {
+    position: fixed;
+    z-index: 1000;
+    inset: 0 auto 0 0;
+    width: min(290px, 85vw);
+    height: 100dvh;
+    flex: none;
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition:
+      transform 0.22s ease,
+      visibility 0.22s ease;
+  }
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 22px 15px 16px;
+    box-shadow: 12px 0 35px rgb(0 0 0 / 18%);
+  }
+
+  .brand {
+    padding-bottom: 28px;
+  }
+
+  .brand-copy,
+  .workspace-label,
+  .sidebar-bottom {
+    display: flex;
+  }
+
+  .nav-item {
+    justify-content: flex-start;
+    padding-inline: 12px;
+  }
+
+  .nav-item > span:not(.nav-icon) {
+    display: inline;
+  }
+
+  :host-context(.app-shell.mobile-menu-open) {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :host {
+      transition: none;
+    }
+  }
+}
+

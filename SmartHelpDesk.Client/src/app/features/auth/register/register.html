@@ -1,0 +1,186 @@
+
+<div class="register-page">
+  <section class="register-brand-panel">
+    <a class="brand" routerLink="/login">
+      <span class="brand-logo">S</span>
+      <span>SmartHelpDesk</span>
+    </a>
+
+    <div class="brand-message">
+      <span class="eyebrow">ONE WORKSPACE. BETTER SUPPORT.</span>
+      <h1>Make every<br />support request<br />count.</h1>
+      <p>
+        Create your account to submit requests, follow progress, and
+        collaborate with your support team.
+      </p>
+
+      <div class="feature-list">
+        <div><span>✓</span> Track your support requests</div>
+        <div><span>✓</span> Get intelligent AI suggestions</div>
+        <div><span>✓</span> Keep your support history organized</div>
+      </div>
+    </div>
+
+    <footer>© SmartHelpDesk · Support made simpler</footer>
+    <div class="decor-circle circle-one"></div>
+    <div class="decor-circle circle-two"></div>
+  </section>
+
+  <section class="register-form-panel">
+    <div class="mobile-brand">
+      <span class="brand-logo">S</span>
+      <strong>SmartHelpDesk</strong>
+    </div>
+
+    <div class="register-card">
+      <span class="form-eyebrow">GET STARTED</span>
+      <h2>Create your account</h2>
+      <p class="form-description">
+        Enter your details to join the support workspace.
+      </p>
+
+      @if (errorMessage) {
+        <div class="alert alert-error" role="alert">
+          <strong>!</strong>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+
+      @if (successMessage) {
+        <div class="alert alert-success" role="status">
+          <strong>✓</strong>
+          <div>
+            <span>{{ successMessage }}</span>
+            <a routerLink="/login">Go to sign in →</a>
+          </div>
+        </div>
+      }
+
+      <form [formGroup]="registerForm" (ngSubmit)="submit()" novalidate>
+        <div class="form-field">
+          <label for="fullName">Full name</label>
+          <input
+            id="fullName"
+            type="text"
+            formControlName="fullName"
+            autocomplete="name"
+            placeholder="Enter your full name"
+            [class.invalid]="registerForm.controls.fullName.touched && registerForm.controls.fullName.invalid"
+          />
+
+          @if (registerForm.controls.fullName.touched && registerForm.controls.fullName.hasError('required')) {
+            <span class="field-error">Full name is required.</span>
+          } @else if (registerForm.controls.fullName.touched && registerForm.controls.fullName.hasError('minlength')) {
+            <span class="field-error">Enter at least 2 characters.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="email">Work email</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="you@company.com"
+            [class.invalid]="registerForm.controls.email.touched && registerForm.controls.email.invalid"
+          />
+
+          @if (registerForm.controls.email.touched && registerForm.controls.email.hasError('required')) {
+            <span class="field-error">Email is required.</span>
+          } @else if (registerForm.controls.email.touched && registerForm.controls.email.hasError('email')) {
+            <span class="field-error">Enter a valid email address.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+            placeholder="At least 8 characters"
+            [class.invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid"
+          />
+
+          @if (registerForm.controls.password.touched && registerForm.controls.password.hasError('required')) {
+            <span class="field-error">Password is required.</span>
+          } @else if (registerForm.controls.password.touched && registerForm.controls.password.hasError('minlength')) {
+            <span class="field-error">Password must contain at least 8 characters.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="confirmPassword">Confirm password</label>
+          <input
+            id="confirmPassword"
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            placeholder="Enter your password again"
+            [class.invalid]="registerForm.controls.confirmPassword.touched && registerForm.controls.confirmPassword.invalid"
+          />
+
+          @if (registerForm.controls.confirmPassword.touched && registerForm.controls.confirmPassword.hasError('required')) {
+            <span class="field-error">Please confirm your password.</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="profileImage">Profile image <span class="optional">(optional)</span></label>
+
+          <div class="image-upload">
+            @if (imagePreview) {
+              <img class="image-preview" [src]="imagePreview" alt="Selected profile preview" />
+            } @else {
+              <div class="image-placeholder">＋</div>
+            }
+
+            <div class="image-upload-copy">
+              <strong>{{ selectedImage?.name || 'Choose a profile image' }}</strong>
+              <span>JPEG, PNG or WebP · Maximum 5 MB</span>
+
+              <label class="file-button" for="profileImage">Browse files</label>
+            </div>
+
+            @if (imagePreview) {
+              <button
+                class="remove-image"
+                type="button"
+                (click)="removeImage(profileImageInput)"
+                aria-label="Remove selected image">
+                ×
+              </button>
+            }
+          </div>
+
+          <input
+            #profileImageInput
+            id="profileImage"
+            class="file-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            (change)="onImageSelected($event)"
+          />
+        </div>
+
+        <button class="submit-button" type="submit" [disabled]="loading">
+          @if (loading) {
+            <span class="spinner"></span>
+            Creating account...
+          } @else {
+            Create account <span>→</span>
+          }
+        </button>
+      </form>
+
+      <p class="login-prompt">
+        Already have an account?
+        <a routerLink="/login">Sign in</a>
+      </p>
+    </div>
+
+    <footer class="form-footer">Secure access to your support workspace</footer>
+  </section>
+</div>

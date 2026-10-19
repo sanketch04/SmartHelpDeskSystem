@@ -1,0 +1,72 @@
+<aside class="sidebar">
+  <!-- Brand -->
+  <a class="brand" routerLink="/dashboard" aria-label="SmartHelpDesk home">
+    <span class="brand-mark">
+      @if (auth.getCurrentUser()?.profileImageUrl; as imageUrl) {
+        <img
+          [src]="imageUrl"
+          alt="SmartHelpDesk"
+          (error)="$any($event.target).style.display = 'none'"
+        />
+      } @else {
+        {{ auth.getCurrentUser()?.fullName?.charAt(0)?.toUpperCase() || '?' }}
+      }
+    </span>
+
+    <span class="brand-copy">
+      <strong>SmartHelpDesk</strong>
+      <small>SUPPORT WORKSPACE</small>
+    </span>
+  </a>
+
+  <div class="workspace-label">WORKSPACE</div>
+
+  <!-- Navigation -->
+  <nav class="nav-list" aria-label="Main navigation">
+    @for (item of visibleNavigation; track item.route) {
+      <a
+        class="nav-item"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+      >
+        <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span>
+        <span>{{ item.label }}</span>
+
+        @if (item.route === '/tickets/create') {
+          <span class="nav-add" aria-hidden="true">+</span>
+        }
+      </a>
+    }
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="sidebar-bottom">
+    <div class="security-note">
+      <span class="security-icon" aria-hidden="true">✓</span>
+      <div>
+        <strong>Secure workspace</strong>
+        <small>Access controlled by your role</small>
+      </div>
+    </div>
+
+    <a class="sidebar-user" routerLink="/profile">
+      <span class="user-avatar">
+        @if (auth.getCurrentUser()?.profileImageUrl; as imageUrl) {
+          <img
+            [src]="imageUrl"
+            alt="Profile photo"
+            (error)="$any($event.target).style.display = 'none'"
+          />
+        } @else {
+          {{ auth.getCurrentUser()?.fullName?.charAt(0)?.toUpperCase() || '?' }}
+        }
+      </span>
+
+      <span class="sidebar-user-copy">
+        <strong>{{ auth.getCurrentUser()?.fullName || 'Signed-in user' }}</strong>
+        <small>{{ roleLabel }}</small>
+      </span>
+    </a>
+  </div>
+</aside>

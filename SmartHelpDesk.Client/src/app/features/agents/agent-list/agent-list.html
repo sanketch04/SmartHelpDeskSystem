@@ -1,0 +1,33 @@
+<section class="page agent-page">
+  <header class="page-header"><div><p class="eyebrow">ADMINISTRATION</p><h1>Support agents</h1><p class="subtitle">Manage the active support team that can receive ticket assignments.</p></div><button type="button" class="primary-button" (click)="showCreateForm = !showCreateForm">{{ showCreateForm ? 'Cancel' : '＋ Add support agent' }}</button></header>
+
+  @if (errorMessage) { <div class="notice error" role="alert">{{ errorMessage }}</div> }
+  @if (successMessage) { <div class="notice success" role="status">{{ successMessage }}</div> }
+
+  @if (showCreateForm) {
+    <form class="agent-form" (ngSubmit)="createAgent()">
+      <div class="form-title"><h2>Create support agent</h2><p>New accounts receive the SupportAgent role through the existing API.</p></div>
+      <div class="form-grid">
+        <label>Full name<input name="fullName" [(ngModel)]="form.fullName" required maxlength="100" autocomplete="name"></label>
+        <label>Email address<input name="email" [(ngModel)]="form.email" type="email" required autocomplete="email"></label>
+        <label>Phone number <span>(optional)</span><input name="phoneNumber" [(ngModel)]="form.phoneNumber" type="tel" autocomplete="tel"></label>
+        <label>Temporary password<input name="password" [(ngModel)]="form.password" type="password" required minlength="8" autocomplete="new-password"></label>
+      </div>
+      <div class="form-actions"><small>Password must contain at least 8 characters.</small><button class="primary-button" type="submit" [disabled]="isSaving">{{ isSaving ? 'Creating…' : 'Create agent' }}</button></div>
+    </form>
+  }
+
+  <section class="agent-list-card">
+    <div class="list-toolbar"><div><h2>Team directory</h2><p>{{ agents.length }} active support {{ agents.length === 1 ? 'agent' : 'agents' }} returned by the API</p></div><label class="search"><span>⌕</span><input type="search" name="searchTerm" [(ngModel)]="searchTerm" placeholder="Search agents"></label><button type="button" class="secondary-button" (click)="loadAgents()" [disabled]="isLoading">Refresh</button></div>
+    @if (isLoading) { <div class="empty-state"><span class="spinner"></span><p>Loading support agents…</p></div> }
+    @else if (filteredAgents.length === 0) { <div class="empty-state"><span class="empty-icon">♙</span><h3>No agents found</h3><p>{{ agents.length ? 'Try another search term.' : 'Create a support agent to make them available for ticket assignment.' }}</p></div> }
+    @else {
+      <div class="agent-table-wrap"><table><thead><tr><th>Agent</th><th>Agent code</th><th>Contact</th><th>Joined</th><th>Status</th><th>Action</th></tr></thead><tbody>
+        @for (agent of filteredAgents; track agent.id) {
+          <tr><td><div class="agent-identity"><span class="agent-avatar">{{ agent.fullName.charAt(0) }}</span><span><strong>{{ agent.fullName }}</strong><small>{{ agent.email }}</small></span></div></td><td><span class="agent-code">{{ agent.supportAgentCode || '—' }}</span></td><td>{{ agent.phoneNumber || 'Not provided' }}</td><td>{{ agent.createdAt | date:'dd MMM yyyy' }}</td><td><span class="agent-status" [class.inactive]="!agent.isActive">{{ agent.isActive ? 'Active' : 'Inactive' }}</span></td><td><button type="button" class="text-action" (click)="toggleAgent(agent)">{{ agent.isActive ? 'Deactivate' : 'Activate' }}</button></td></tr>
+        }
+      </tbody></table></div>
+    }
+  </section>
+  <p class="footnote">Agent administration is available to Administrators only. The API remains responsible for enforcing access and validating agent accounts.</p>
+</section>

@@ -1,0 +1,69 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">SMART HELPDESK / WORKSPACE</p>
+      <h1>{{ viewTitle }}</h1>
+      <p class="subtitle">{{ viewDescription }}</p>
+    </div>
+    @if (!auth.isSupportAgent()) {
+      <a class="primary-button" routerLink="/tickets/create">＋ Create Ticket</a>
+    }
+  </header>
+
+  <section class="ticket-tools" aria-label="Ticket filters">
+    <label class="search-box">
+      <span aria-hidden="true">⌕</span>
+      <input type="search" [(ngModel)]="searchTerm" placeholder="Search tickets by title, ID, or category" aria-label="Search tickets">
+    </label>
+    <label class="filter-control">
+      <span>Status</span>
+      <select [(ngModel)]="statusFilter" aria-label="Filter by status">
+        @for (status of statuses; track status) { <option [value]="status">{{ status }}</option> }
+      </select>
+    </label>
+    <label class="filter-control">
+      <span>Priority</span>
+      <select [(ngModel)]="priorityFilter" aria-label="Filter by priority">
+        @for (priority of priorities; track priority) { <option [value]="priority">{{ priority }}</option> }
+      </select>
+    </label>
+    <button type="button" class="refresh-button" (click)="ngOnInit()" [disabled]="isLoading">
+      {{ isLoading ? 'Loading…' : 'Refresh' }}
+    </button>
+  </section>
+
+  <div class="results-line">
+    <span><strong>{{ filteredTickets.length }}</strong> {{ filteredTickets.length === 1 ? 'ticket' : 'tickets' }}</span>
+    <span class="results-hint">Showing records available to your account</span>
+  </div>
+
+  @if (isLoading) {
+    <div class="state-card" role="status"><span class="spinner"></span><h3>Loading tickets</h3><p>Retrieving the latest ticket records…</p></div>
+  } @else if (errorMessage) {
+    <div class="error-card" role="alert"><h3>We couldn't load this view</h3><p>{{ errorMessage }}</p><button class="refresh-button" type="button" (click)="ngOnInit()">Try again</button></div>
+  } @else if (filteredTickets.length === 0) {
+    <div class="state-card empty-state"><span class="empty-icon">✓</span><h3>{{ tickets.length ? 'No matching tickets' : 'Nothing in your queue yet' }}</h3><p>{{ tickets.length ? 'Try changing your search or filters.' : 'When tickets are available to your account, they will appear here.' }}</p></div>
+  } @else {
+    <div class="table-container">
+      <table>
+        <thead><tr><th>Ticket</th><th>Priority</th><th>Status</th><th>Created</th><th>Assignment</th><th></th></tr></thead>
+        <tbody>
+          @for (ticket of filteredTickets; track trackTicket($index, ticket)) {
+            <tr>
+              <td class="ticket-cell">
+                <span class="ticket-id">#{{ ticket.id }}</span>
+                <a class="ticket-title" [routerLink]="['/tickets', ticket.id]">{{ ticket.title }}</a>
+                <span class="ticket-description">{{ ticket.category }} · {{ ticket.description }}</span>
+              </td>
+              <td><span class="badge priority" [ngClass]="getPriorityClass(ticket.priority)">{{ ticket.priority }}</span></td>
+              <td><span class="badge status" [ngClass]="getStatusClass(ticket.status)">{{ ticket.status }}</span></td>
+              <td class="date-cell">{{ ticket.createdAt | date:'dd MMM yyyy' }}<small>{{ ticket.createdAt | date:'h:mm a' }}</small></td>
+              <td><span [class.unassigned]="!ticket.assignedToUserId">{{ ticket.assignedToUserId ? 'Assigned' : 'Unassigned' }}</span></td>
+              <td><a class="view-link" [routerLink]="['/tickets', ticket.id]">Open <span aria-hidden="true">→</span></a></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

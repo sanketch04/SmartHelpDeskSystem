@@ -1,0 +1,125 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">SMART HELPDESK / TICKET</p>
+      <h1>Ticket Details</h1>
+      <p class="subtitle">Review the request, manage permitted actions, and follow its activity.</p>
+    </div>
+    <a routerLink="/tickets" class="back-button">← Back to Tickets</a>
+  </header>
+
+  @if (isLoading) {
+    <div class="state-card" role="status"><div class="spinner"></div><h3>Loading ticket details</h3><p>Please wait while we retrieve this ticket.</p></div>
+  } @else if (errorMessage) {
+    <div class="error-card" role="alert"><h3>Unable to open ticket</h3><p>{{ errorMessage }}</p><button class="primary-button" type="button" (click)="retryLoadTicket()">Try again</button></div>
+  } @else if (ticket; as currentTicket) {
+    <article class="ticket-card">
+      <div class="ticket-heading">
+        <div class="ticket-title-block">
+          <span class="ticket-number">TICKET #{{ currentTicket.id }}</span>
+          <h2>{{ currentTicket.title }}</h2>
+        </div>
+        <span class="badge status" [ngClass]="getStatusClass(currentTicket.status)">{{ currentTicket.status }}</span>
+      </div>
+
+      <div class="metadata">
+        <div class="metadata-item"><span>Category</span><strong>{{ currentTicket.category }}</strong></div>
+        <div class="metadata-item"><span>Priority</span><strong><span class="badge priority" [ngClass]="getPriorityClass(currentTicket.priority)">{{ currentTicket.priority }}</span></strong></div>
+        <div class="metadata-item"><span>Created</span><strong>{{ currentTicket.createdAt | date:'dd MMM yyyy, h:mm a' }}</strong></div>
+        <div class="metadata-item"><span>Assignment</span><strong>{{ currentTicket.assignedToUserId ? 'Assigned to a support agent' : 'Awaiting assignment' }}</strong></div>
+      </div>
+      <div class="description-section"><h3>Description</h3><p class="description">{{ currentTicket.description }}</p></div>
+    </article>
+
+    @if (auth.isAdministrator() || auth.isSupportAgent()) {
+      <section class="management-card">
+        <div class="management-heading">
+          <div><span class="section-eyebrow">WORKFLOW</span><h2>Ticket actions</h2><p>Actions shown here are still validated by the API.</p></div>
+        </div>
+
+        @if (auth.isAdministrator()) {
+          <div class="action-form">
+            <div class="action-copy"><strong>Assign support agent</strong><span>Choose an active agent to take ownership of this request.</span></div>
+            <div class="action-controls">
+              <select [(ngModel)]="selectedAgentId" aria-label="Select support agent" [disabled]="isAgentsLoading || isSavingAssignment">
+                <option value="">Select an agent…</option>
+                @for (agent of agents; track agent.id) {
+                  <option [value]="agent.id">{{ agent.fullName }}{{ agent.supportAgentCode ? ' · ' + agent.supportAgentCode : '' }}</option>
+                }
+              </select>
+              <button type="button" class="primary-button" (click)="saveAssignment()" [disabled]="!selectedAgentId || isSavingAssignment || isAgentsLoading">
+                {{ isSavingAssignment ? 'Saving…' : 'Save assignment' }}
+              </button>
+            </div>
+            @if (isAgentsLoading) { <small class="helper-text">Loading active support agents…</small> }
+            @if (!isAgentsLoading && agents.length === 0) { <small class="helper-text">No active support agents were returned by the API.</small> }
+          </div>
+        }
+
+        <div class="action-form">
+          <div class="action-copy"><strong>Update status</strong><span>Move the request through its support lifecycle.</span></div>
+          <div class="action-controls">
+            <select [(ngModel)]="selectedStatus" aria-label="Select ticket status" [disabled]="isSavingStatus">
+              @for (status of statuses; track status) { <option [value]="status">{{ status }}</option> }
+            </select>
+            <button type="button" class="primary-button" (click)="saveStatus()" [disabled]="isSavingStatus || selectedStatus === currentTicket.status">
+              {{ isSavingStatus ? 'Saving…' : 'Update status' }}
+            </button>
+          </div>
+        </div>
+        @if (actionMessage) { <p class="action-success" role="status">{{ actionMessage }}</p> }
+        @if (actionError) { <p class="action-error" role="alert">{{ actionError }}</p> }
+      </section>
+    }
+
+    <section class="history-card">
+      <div class="history-heading">
+        <div><span class="section-eyebrow">ACTIVITY LOG</span><h2>Ticket History</h2><p>Readable updates and actions recorded for this ticket.</p></div>
+        <span class="history-count">{{ isHistoryLoading ? 'Loading…' : auditHistory.length + (auditHistory.length === 1 ? ' event' : ' events') }}</span>
+      </div>
+
+      @if (isHistoryLoading) {
+        <div class="history-state" role="status"><div class="small-spinner"></div><p>Loading activity history…</p></div>
+      } @else if (historyError) {
+        <div class="history-error" role="alert"><p>{{ historyError }}</p><button type="button" class="primary-button" (click)="loadAuditHistory(currentTicket.id)">Retry history</button></div>
+      } @else if (auditHistory.length === 0) {
+        <div class="history-empty"><div class="empty-history-icon">↻</div><h3>No activity recorded yet</h3><p>Ticket updates will appear here when available.</p></div>
+      } @else {
+        <div class="timeline">
+          @for (entry of auditHistory; track entry.id) {
+            <article class="timeline-item">
+              <div class="timeline-rail" aria-hidden="true"><span class="timeline-marker"><span class="timeline-marker-inner"></span></span></div>
+              <div class="timeline-content">
+                <div class="timeline-top">
+                  <div class="event-heading"><span class="event-type">{{ getActionLabel(entry.action) }}</span><h3>{{ entry.description || 'Ticket activity recorded' }}</h3></div>
+                  <time class="event-time">{{ entry.createdAt | date:'dd MMM yyyy' }}<span>{{ entry.createdAt | date:'h:mm a' }}</span></time>
+                </div>
+                <div class="event-actor">
+                  <span class="user-avatar">{{ getInitial(entry.performedByUserName) }}</span>
+                  <div><strong>{{ entry.performedByUserName || 'Support team member' }}</strong><span>Recorded this activity</span></div>
+                </div>
+                @if (getDisplayChanges(entry.oldValue).length || getDisplayChanges(entry.newValue).length) {
+                  <details class="change-details">
+                    <summary><span>View change summary</span><span class="details-arrow">⌄</span></summary>
+                    <div class="change-grid">
+                      @if (getDisplayChanges(entry.oldValue).length) {
+                        <div class="change-panel previous"><div class="change-panel-heading"><span class="change-indicator"></span>Previous values</div>
+                          <div class="field-changes">@for (change of getDisplayChanges(entry.oldValue); track change.label) { <div class="field-change"><span>{{ change.label }}</span><strong>{{ change.value }}</strong></div> }</div>
+                        </div>
+                      }
+                      @if (getDisplayChanges(entry.newValue).length) {
+                        <div class="change-panel current"><div class="change-panel-heading"><span class="change-indicator"></span>Updated values</div>
+                          <div class="field-changes">@for (change of getDisplayChanges(entry.newValue); track change.label) { <div class="field-change"><span>{{ change.label }}</span><strong>{{ change.value }}</strong></div> }</div>
+                        </div>
+                      }
+                    </div>
+                  </details>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</section>

@@ -1,0 +1,258 @@
+<section class="page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">SUPPORT MANAGEMENT</p>
+      <h1>Create a Ticket</h1>
+      <p class="subtitle">Describe your issue and optionally use AI to classify it.</p>
+    </div>
+
+    <a routerLink="/dashboard" class="back-link"> ← Back to Dashboard </a>
+  </header>
+
+  <!-- Ticket Form -->
+  <form [formGroup]="ticketForm" (ngSubmit)="createTicket()" novalidate>
+    <div class="form-card">
+      <div class="section-heading">
+        <div>
+          <h2>Ticket Details</h2>
+          <p>Provide enough information to help the support team.</p>
+        </div>
+
+        <span class="required-note">* Required fields</span>
+      </div>
+
+      <!-- Title -->
+      <div class="field">
+        <label for="title">Ticket Title *</label>
+
+        <input
+          id="title"
+          type="text"
+          formControlName="title"
+          maxlength="200"
+          placeholder="Example: Unable to access my account"
+          [class.invalid]="title.touched && title.invalid"
+          (input)="onTicketContentChanged()"
+        />
+
+        @if (title.touched && title.hasError('required')) {
+          <small class="field-error">Title is required.</small>
+        } @else if (title.touched && title.hasError('minlength')) {
+          <small class="field-error"> Title must contain at least 3 characters. </small>
+        } @else if (title.touched && title.hasError('maxlength')) {
+          <small class="field-error"> Title cannot exceed 200 characters. </small>
+        }
+      </div>
+
+      <!-- Description -->
+      <div class="field">
+        <label for="description">Description *</label>
+
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="6"
+          maxlength="5000"
+          placeholder="Explain the issue, what you were doing, and any error you received..."
+          [class.invalid]="description.touched && description.invalid"
+          (input)="onTicketContentChanged()"
+        ></textarea>
+
+        <div class="field-footer">
+          @if (description.touched && description.invalid) {
+            <small class="field-error">
+              @if (description.hasError('required')) {
+                Description is required.
+              } @else if (description.hasError('minlength')) {
+                Enter at least 5 characters.
+              } @else {
+                Description cannot exceed 5000 characters.
+              }
+            </small>
+          } @else {
+            <span></span>
+          }
+
+          <small>{{ description.value?.length ?? 0 }}/5000</small>
+        </div>
+      </div>
+
+      <!-- AI Assistant -->
+      <section class="ai-panel">
+        <div class="ai-heading">
+          <div class="ai-icon">AI</div>
+
+          <div>
+            <h3>AI Ticket Assistant</h3>
+            <p>Get category, priority, and summary suggestions from your local AI service.</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="ai-button"
+          (click)="getAiSuggestions()"
+          [disabled]="isClassifying || isSubmitting"
+        >
+          @if (isClassifying) {
+            <span class="button-spinner"></span>
+            Analysing ticket...
+          } @else {
+            ✦ Get AI Suggestions
+          }
+        </button>
+
+        @if (aiError) {
+          <div class="error-banner" role="alert">
+            {{ aiError }}
+          </div>
+        }
+
+        @if (aiSuggestion; as suggestion) {
+          <div class="suggestion-card">
+            <div class="suggestion-header">
+              <div>
+                <span class="suggestion-eyebrow">AI ANALYSIS</span>
+                <h4>Suggested Classification</h4>
+              </div>
+
+              <span class="ai-result-badge">AI generated</span>
+            </div>
+
+            <div class="suggestion-values">
+              <div class="suggestion-value">
+                <span>Suggested Category</span>
+                <strong>{{ suggestion.suggestedCategory }}</strong>
+              </div>
+
+              <div class="suggestion-value">
+                <span>Suggested Priority</span>
+                <strong
+                  class="badge priority"
+                  [ngClass]="suggestion.suggestedPriority.toLowerCase()"
+                >
+                  {{ suggestion.suggestedPriority }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="suggestion-text">
+              <span>Summary</span>
+              <p>{{ suggestion.summary }}</p>
+            </div>
+
+            <div class="suggestion-text">
+              <span>Reasoning</span>
+              <p>{{ suggestion.reason }}</p>
+            </div>
+
+            <p class="suggestion-hint">
+              AI suggestions may not always be accurate. Review them before applying. Your ticket
+              will not be submitted until you select Create Ticket.
+            </p>
+
+            <div class="suggestion-actions">
+              <button
+                type="button"
+                class="apply-ai-button"
+                (click)="applyAiSuggestions()"
+                [disabled]="isSubmitting || isClassifying"
+              >
+                Apply Suggestions
+              </button>
+
+              <button
+                type="button"
+                class="keep-values-button"
+                (click)="keepMyValues()"
+                [disabled]="isSubmitting || isClassifying"
+              >
+                Keep My Values
+              </button>
+            </div>
+
+            @if (aiSuggestionApplied) {
+              <p class="ai-applied-message" role="status">
+                ✓ AI suggestions applied. You can still edit the values below.
+              </p>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Category and Priority -->
+      <div class="field-row">
+        <div class="field">
+          <label for="category">Category *</label>
+
+          <input
+            id="category"
+            type="text"
+            formControlName="category"
+            maxlength="100"
+            placeholder="General"
+            [class.invalid]="category.touched && category.invalid"
+          />
+
+          @if (category.touched && category.hasError('required')) {
+            <small class="field-error">Category is required.</small>
+          } @else if (category.touched && category.hasError('maxlength')) {
+            <small class="field-error"> Category cannot exceed 100 characters. </small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="priority">Priority *</label>
+
+          <select
+            id="priority"
+            formControlName="priority"
+            [class.invalid]="priority.touched && priority.invalid"
+          >
+            @for (item of priorities; track item) {
+              <option [value]="item">{{ item }}</option>
+            }
+          </select>
+
+          @if (priority.touched && priority.invalid) {
+            <small class="field-error">Select a priority.</small>
+          }
+        </div>
+      </div>
+
+      <!-- Submission Feedback -->
+      @if (submitError) {
+        <div class="error-banner" role="alert">
+          {{ submitError }}
+        </div>
+      }
+
+      @if (successMessage) {
+        <div class="success-banner" role="status">
+          {{ successMessage }}
+        </div>
+      }
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <a
+          routerLink="/dashboard"
+          class="cancel-button"
+          [class.disabled-link]="isSubmitting || isClassifying"
+        >
+          Cancel
+        </a>
+
+        <button type="submit" class="submit-button" [disabled]="isSubmitting || isClassifying">
+          @if (isSubmitting) {
+            <span class="button-spinner"></span>
+            Creating Ticket...
+          } @else {
+            Create Ticket
+          }
+        </button>
+      </div>
+    </div>
+  </form>
+</section>

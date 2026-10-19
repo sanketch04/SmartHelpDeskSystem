@@ -1,0 +1,1 @@
+:host{display:block;min-height:100vh}.app-layout{display:flex;min-height:100vh;background:#f7f9fc}.main-area{display:flex;min-width:0;flex:1;flex-direction:column}.page-content{min-height:calc(100vh - 68px);min-width:0;flex:1;overflow-x:hidden}@media(max-width:650px){.page-content{min-height:calc(100vh - 60px)}}

@@ -21,5 +21,10 @@ public class CreateTicketDto
     [RegularExpression("^(Low|Medium|High|Critical)$",
         ErrorMessage = "Priority must be Low, Medium, High, or Critical.")]
     public string Priority { get; set; } = "Medium";
+    #region AI Assistance
+
+    public string? AISummary { get; set; }
+
+    #endregion
 }
 #endregion

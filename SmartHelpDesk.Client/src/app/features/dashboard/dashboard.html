@@ -1,0 +1,46 @@
+<section class="dashboard-page">
+  <div class="welcome-banner">
+    <div class="welcome-copy"><p class="eyebrow">SMART HELPDESK</p><h1>Good to see you, {{ greeting }}.</h1><p>{{ roleTitle }} · Here is the latest snapshot of your support work.</p></div>
+    <div class="welcome-art" aria-hidden="true"><span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-center">✦</span></div>
+    @if (!auth.isSupportAgent()) { <a routerLink="/tickets/create" class="banner-button">＋ New ticket</a> }
+  </div>
+
+  @if (isLoading) {
+    <div class="dashboard-state"><span class="spinner"></span><span>Loading your overview…</span></div>
+  } @else if (errorMessage) {
+    <div class="dashboard-error" role="alert"><span>{{ errorMessage }}</span><button type="button" (click)="loadOverview()">Retry</button></div>
+  } @else {
+    <div class="stats-grid">
+      <article class="stat-card"><div class="stat-top"><span class="stat-label">Total tickets</span><span class="stat-icon purple">▤</span></div><strong>{{ tickets.length }}</strong><small>Available to your account</small></article>
+      <article class="stat-card"><div class="stat-top"><span class="stat-label">Open</span><span class="stat-icon blue">◷</span></div><strong>{{ openCount }}</strong><small>Waiting for action</small></article>
+      <article class="stat-card"><div class="stat-top"><span class="stat-label">In progress</span><span class="stat-icon amber">↗</span></div><strong>{{ progressCount }}</strong><small>Being worked on</small></article>
+      <article class="stat-card"><div class="stat-top"><span class="stat-label">Resolved / closed</span><span class="stat-icon green">✓</span></div><strong>{{ resolvedCount }}</strong><small>Completed requests</small></article>
+    </div>
+
+    <div class="dashboard-grid">
+      <section class="recent-card">
+        <div class="section-heading"><div><p class="eyebrow">RECENT ACTIVITY</p><h2>Recent tickets</h2></div><a [routerLink]="auth.isAdministrator() ? '/tickets' : auth.isSupportAgent() ? '/assigned-tickets' : '/my-tickets'">View all →</a></div>
+        @if (tickets.length === 0) { <div class="empty-dashboard"><span>✓</span><h3>You're all caught up</h3><p>There are no tickets to show right now.</p></div> }
+        @else {
+          <div class="recent-list">
+            @for (ticket of tickets.slice(0, 5); track ticket.id) {
+              <a class="recent-ticket" [routerLink]="['/tickets', ticket.id]">
+                <span class="ticket-mini-icon">#{{ ticket.id }}</span>
+                <span class="recent-ticket-main"><strong>{{ ticket.title }}</strong><small>{{ ticket.category }} · {{ ticket.createdAt | date:'dd MMM yyyy' }}</small></span>
+                <span class="mini-status" [class.status-open]="ticket.status === 'Open'" [class.status-progress]="ticket.status === 'In Progress'" [class.status-done]="ticket.status === 'Resolved' || ticket.status === 'Closed'">{{ ticket.status }}</span>
+                <span class="recent-arrow">→</span>
+              </a>
+            }
+          </div>
+        }
+      </section>
+      <aside class="quick-card">
+        <p class="eyebrow">QUICK ACTIONS</p><h2>What would you like to do?</h2>
+        @if (!auth.isSupportAgent()) { <a class="quick-action" routerLink="/tickets/create"><span class="quick-icon purple">＋</span><span><strong>Create a ticket</strong><small>Report an issue to support</small></span><b>→</b></a> }
+        <a class="quick-action" [routerLink]="auth.isAdministrator() ? '/tickets' : auth.isSupportAgent() ? '/assigned-tickets' : '/my-tickets'"><span class="quick-icon blue">▤</span><span><strong>{{ auth.isAdministrator() ? 'Manage all tickets' : auth.isSupportAgent() ? 'Open assigned queue' : 'Track my tickets' }}</strong><small>{{ auth.isAdministrator() ? 'Review and assign requests' : auth.isSupportAgent() ? 'Work through your queue' : 'Check progress and updates' }}</small></span><b>→</b></a>
+        @if (auth.isAdministrator()) { <a class="quick-action" routerLink="/agents"><span class="quick-icon green">♙</span><span><strong>Support agents</strong><small>Review the active agent team</small></span><b>→</b></a> }
+        <div class="attention-note"><span>!</span><p><strong>{{ urgentCount }} high-priority {{ urgentCount === 1 ? 'ticket' : 'tickets' }}</strong><small>Based on the tickets visible to your role.</small></p></div>
+      </aside>
+    </div>
+  }
+</section>

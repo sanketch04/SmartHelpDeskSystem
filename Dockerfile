@@ -5,8 +5,8 @@ WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_HTTP_PORTS=8080
 
-# Stage 2: Restore and publish the application
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Stage 2: Restore and publish
+FROM mcr.microsoft.com/dotnet/sdk:8.0.408-bookworm-slim AS build
 WORKDIR /src
 
 COPY ["SmartHelpDesk.API/SmartHelpDesk.API.csproj", "SmartHelpDesk.API/"]

@@ -1,0 +1,8 @@
+<header class="topbar">
+  <div class="breadcrumb"><span class="breadcrumb-muted">Workspace</span><span class="breadcrumb-divider">/</span><strong>SmartHelpDesk</strong></div>
+  <div class="topbar-actions">
+    <span class="secure-indicator"><span></span> Secure session</span>
+    <div class="topbar-user"><span class="topbar-avatar">{{ auth.getCurrentUser()?.fullName?.charAt(0) || 'U' }}</span><span class="topbar-user-name">{{ auth.getCurrentUser()?.fullName || 'User' }}</span></div>
+    <button type="button" class="logout-button" (click)="logout()" [disabled]="isLoggingOut">{{ isLoggingOut ? 'Signing out…' : 'Sign out' }}</button>
+  </div>
+</header>

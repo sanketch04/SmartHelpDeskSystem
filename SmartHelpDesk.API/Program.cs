@@ -85,9 +85,34 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<ITicketHistoryRepository,TicketHistoryRepository>();
+builder.Services.AddHttpClient<IAiTicketService, AiTicketService>(
+    (serviceProvider, client) =>
+    {
+        var configuration = serviceProvider
+            .GetRequiredService<IConfiguration>();
+
+        var ollamaUrl = configuration["AiService:BaseUrl"]
+            ?? "http://localhost:11434/";
+
+        client.BaseAddress = new Uri(ollamaUrl);
+        client.Timeout = TimeSpan.FromSeconds(120);
+    });
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularClient", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 
 #endregion
+
 
 #region JWT Authentication
 
@@ -209,6 +234,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+
+app.UseCors("AngularClient");
 
 app.UseStaticFiles();
 
