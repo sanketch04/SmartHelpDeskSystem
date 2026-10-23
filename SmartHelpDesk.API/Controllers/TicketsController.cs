@@ -1,43 +1,89 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartHelpdesk.BLL.Common.CQRS;
+using SmartHelpdesk.BLL.Features.Tickets.Commands.CreateTicket;
+using SmartHelpdesk.BLL.Features.Tickets.Queries.GetTicketById;
 using SmartHelpdesk.BLL.Interfaces;
 using SmartHelpdesk.Common.DTOs.TicketDtos;
+using System.Security.Claims;
 
 namespace SmartHelpdesk.API.Controllers;
 
-#region Controller
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
 public sealed class TicketsController : ControllerBase
 {
     #region Fields
+
     private readonly ITicketService _ticketService;
     private readonly IAuthorizationService _authorizationService;
+
+    // CQRS handlers
+    private readonly ICommandHandler<CreateTicketCommand, int> _createTicket;
+    private readonly IQueryHandler<GetTicketByIdQuery, TicketResponseDto?> _getTicketById;
+
     #endregion
 
     #region Ctor
+
     public TicketsController(
         ITicketService ticketService,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService,
+        ICommandHandler<CreateTicketCommand, int> createTicket,
+        IQueryHandler<GetTicketByIdQuery, TicketResponseDto?> getTicketById)
     {
         _ticketService = ticketService
             ?? throw new ArgumentNullException(nameof(ticketService));
 
         _authorizationService = authorizationService
             ?? throw new ArgumentNullException(nameof(authorizationService));
+
+        _createTicket = createTicket
+            ?? throw new ArgumentNullException(nameof(createTicket));
+
+        _getTicketById = getTicketById
+            ?? throw new ArgumentNullException(nameof(getTicketById));
     }
+
     #endregion
 
-    #region Get Current User Id
+    #region Helpers
+
     private string? GetCurrentUserId()
     {
         return User.FindFirstValue(ClaimTypes.NameIdentifier);
     }
+
+    /// <summary>
+    /// Administrator, the ticket's creator, the assigned agent, or anyone
+    /// with the Tickets.ViewAll permission may view a ticket.
+    /// Shared by GetById and GetAuditHistory so the rule exists once.
+    /// </summary>
+    private async Task<bool> CanViewTicketAsync(TicketResponseDto ticket, string currentUserId)
+    {
+        if (User.IsInRole("Administrator"))
+        {
+            return true;
+        }
+
+        if (ticket.CreatedByUserId == currentUserId || ticket.AssignedToUserId == currentUserId)
+        {
+            return true;
+        }
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(
+            User,
+            resource: null,
+            policyName: "Permission:Tickets.ViewAll");
+
+        return authorizationResult.Succeeded;
+    }
+
     #endregion
 
     #region Get All Tickets
+
     [HttpGet]
     [Authorize(Policy = "AdministratorOnly")]
     public async Task<ActionResult<IReadOnlyList<TicketResponseDto>>> GetAll(
@@ -47,9 +93,11 @@ public sealed class TicketsController : ControllerBase
 
         return Ok(tickets);
     }
+
     #endregion
 
     #region Get My Tickets
+
     [HttpGet("my")]
     [Authorize(Policy = "Permission:Tickets.ViewOwn")]
     public async Task<ActionResult<IReadOnlyList<TicketResponseDto>>> GetMyTickets(
@@ -68,9 +116,11 @@ public sealed class TicketsController : ControllerBase
 
         return Ok(tickets);
     }
+
     #endregion
 
     #region Get Assigned Tickets
+
     [HttpGet("assigned")]
     [Authorize(Policy = "Permission:Tickets.ViewAll")]
     public async Task<ActionResult<IReadOnlyList<TicketResponseDto>>> GetAssignedTickets(
@@ -89,9 +139,11 @@ public sealed class TicketsController : ControllerBase
 
         return Ok(tickets);
     }
+
     #endregion
 
     #region Get Ticket By Id
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TicketResponseDto>> GetById(
         int id,
@@ -99,10 +151,7 @@ public sealed class TicketsController : ControllerBase
     {
         if (id <= 0)
         {
-            return BadRequest(new
-            {
-                message = "Invalid ticket ID."
-            });
+            return BadRequest(new { message = "Invalid ticket ID." });
         }
 
         var currentUserId = GetCurrentUserId();
@@ -112,48 +161,27 @@ public sealed class TicketsController : ControllerBase
             return Unauthorized();
         }
 
-        var ticket = await _ticketService.GetByIdAsync(
-            id,
+        var ticket = await _getTicketById.HandleAsync(
+            new GetTicketByIdQuery(id),
             cancellationToken);
 
         if (ticket is null)
         {
-            return NotFound(new
-            {
-                message = "Ticket not found."
-            });
+            return NotFound(new { message = "Ticket not found." });
         }
 
-        var isAdministrator = User.IsInRole("Administrator");
-        var isCreator = ticket.CreatedByUserId == currentUserId;
-        var isAssignedAgent = ticket.AssignedToUserId == currentUserId;
-
-        var hasViewAllPermission = false;
-
-        if (!isAdministrator && !isCreator && !isAssignedAgent)
-        {
-            var authorizationResult =
-                await _authorizationService.AuthorizeAsync(
-                    User,
-                    resource: null,
-                    policyName: "Permission:Tickets.ViewAll");
-
-            hasViewAllPermission = authorizationResult.Succeeded;
-        }
-
-        if (!isAdministrator &&
-            !isCreator &&
-            !isAssignedAgent &&
-            !hasViewAllPermission)
+        if (!await CanViewTicketAsync(ticket, currentUserId))
         {
             return Forbid();
         }
 
         return Ok(ticket);
     }
+
     #endregion
 
     #region Create Ticket
+
     [HttpPost]
     [Authorize(Policy = "Permission:Tickets.Create")]
     public async Task<ActionResult<TicketResponseDto>> Create(
@@ -169,27 +197,39 @@ public sealed class TicketsController : ControllerBase
 
         try
         {
-            var ticket = await _ticketService.CreateAsync(
-                dto,
-                userId,
+            // Command: changes data, returns only the new Id.
+            var command = new CreateTicketCommand(
+                dto.Title,
+                dto.Description,
+                dto.Category,
+                dto.Priority,
+                userId);
+
+            var newId = await _createTicket.HandleAsync(
+                command,
+                cancellationToken);
+
+            // Query: read the saved ticket back so the response body
+            // stays the same as before the CQRS change.
+            var created = await _getTicketById.HandleAsync(
+                new GetTicketByIdQuery(newId),
                 cancellationToken);
 
             return CreatedAtAction(
                 nameof(GetById),
-                new { id = ticket.Id },
-                ticket);
+                new { id = newId },
+                created);
         }
         catch (ArgumentException exception)
         {
-            return BadRequest(new
-            {
-                message = exception.Message
-            });
+            return BadRequest(new { message = exception.Message });
         }
     }
+
     #endregion
 
     #region Update Ticket
+
     [HttpPut("{id:int}")]
     [Authorize(Policy = "SupportAgentOrAdministrator")]
     public async Task<ActionResult<TicketResponseDto>> Update(
@@ -214,25 +254,21 @@ public sealed class TicketsController : ControllerBase
 
             if (ticket is null)
             {
-                return NotFound(new
-                {
-                    message = "Ticket not found."
-                });
+                return NotFound(new { message = "Ticket not found." });
             }
 
             return Ok(ticket);
         }
         catch (ArgumentException exception)
         {
-            return BadRequest(new
-            {
-                message = exception.Message
-            });
+            return BadRequest(new { message = exception.Message });
         }
     }
+
     #endregion
 
     #region Delete Ticket
+
     [HttpDelete("{id:int}")]
     [Authorize(Policy = "AdministratorOnly")]
     public async Task<IActionResult> Delete(
@@ -245,17 +281,16 @@ public sealed class TicketsController : ControllerBase
 
         if (!deleted)
         {
-            return NotFound(new
-            {
-                message = "Ticket not found."
-            });
+            return NotFound(new { message = "Ticket not found." });
         }
 
         return NoContent();
     }
+
     #endregion
 
     #region Assign Ticket
+
     [HttpPut("{id:int}/assign")]
     [Authorize(Policy = "AdministratorOnly")]
     public async Task<IActionResult> AssignTicket(
@@ -266,10 +301,7 @@ public sealed class TicketsController : ControllerBase
         if (dto is null ||
             string.IsNullOrWhiteSpace(dto.AssignedToUserId))
         {
-            return BadRequest(new
-            {
-                message = "AssignedToUserId is required."
-            });
+            return BadRequest(new { message = "AssignedToUserId is required." });
         }
 
         var assignedByUserId = GetCurrentUserId();
@@ -289,32 +321,25 @@ public sealed class TicketsController : ControllerBase
 
             if (ticket is null)
             {
-                return NotFound(new
-                {
-                    message = "Ticket not found."
-                });
+                return NotFound(new { message = "Ticket not found." });
             }
 
             return Ok(ticket);
         }
         catch (InvalidOperationException exception)
         {
-            return BadRequest(new
-            {
-                message = exception.Message
-            });
+            return BadRequest(new { message = exception.Message });
         }
         catch (ArgumentException exception)
         {
-            return BadRequest(new
-            {
-                message = exception.Message
-            });
+            return BadRequest(new { message = exception.Message });
         }
     }
+
     #endregion
 
     #region Update Ticket Status
+
     [HttpPatch("{id:int}/status")]
     [Authorize(Policy = "Permission:Tickets.UpdateStatus")]
     public async Task<ActionResult<TicketResponseDto>> UpdateStatus(
@@ -339,22 +364,18 @@ public sealed class TicketsController : ControllerBase
 
             if (ticket is null)
             {
-                return NotFound(new
-                {
-                    message = "Ticket not found."
-                });
+                return NotFound(new { message = "Ticket not found." });
             }
 
             return Ok(ticket);
         }
         catch (ArgumentException exception)
         {
-            return BadRequest(new
-            {
-                message = exception.Message
-            });
+            return BadRequest(new { message = exception.Message });
         }
     }
+
+    #endregion
 
     #region Get Ticket Audit History
 
@@ -365,10 +386,7 @@ public sealed class TicketsController : ControllerBase
     {
         if (id <= 0)
         {
-            return BadRequest(new
-            {
-                message = "Invalid ticket ID."
-            });
+            return BadRequest(new { message = "Invalid ticket ID." });
         }
 
         var currentUserId = GetCurrentUserId();
@@ -378,39 +396,16 @@ public sealed class TicketsController : ControllerBase
             return Unauthorized();
         }
 
-        var ticket = await _ticketService.GetByIdAsync(
-            id,
+        var ticket = await _getTicketById.HandleAsync(
+            new GetTicketByIdQuery(id),
             cancellationToken);
 
         if (ticket is null)
         {
-            return NotFound(new
-            {
-                message = "Ticket not found."
-            });
+            return NotFound(new { message = "Ticket not found." });
         }
 
-        var isAdministrator = User.IsInRole("Administrator");
-        var isCreator = ticket.CreatedByUserId == currentUserId;
-        var isAssignedAgent = ticket.AssignedToUserId == currentUserId;
-
-        var hasViewAllPermission = false;
-
-        if (!isAdministrator && !isCreator && !isAssignedAgent)
-        {
-            var authorizationResult =
-                await _authorizationService.AuthorizeAsync(
-                    User,
-                    resource: null,
-                    policyName: "Permission:Tickets.ViewAll");
-
-            hasViewAllPermission = authorizationResult.Succeeded;
-        }
-
-        if (!isAdministrator &&
-            !isCreator &&
-            !isAssignedAgent &&
-            !hasViewAllPermission)
+        if (!await CanViewTicketAsync(ticket, currentUserId))
         {
             return Forbid();
         }
@@ -423,6 +418,4 @@ public sealed class TicketsController : ControllerBase
     }
 
     #endregion
-    #endregion
 }
-#endregion

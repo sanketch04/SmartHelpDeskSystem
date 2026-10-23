@@ -5,9 +5,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SmartHelpdesk.API.Security.Authorization;
+using SmartHelpdesk.BLL.Common.CQRS;
+using SmartHelpdesk.BLL.Features.Tickets.Commands.CreateTicket;
+using SmartHelpdesk.BLL.Features.Tickets.Queries.GetTicketById;
 using SmartHelpdesk.BLL.Implementation;
 using SmartHelpdesk.BLL.Interfaces;
 using SmartHelpdesk.BLL.Services;
+using SmartHelpdesk.Common.DTOs.TicketDtos;
 using SmartHelpdesk.Common.Security;
 using SmartHelpdesk.DAL.Context;
 using SmartHelpdesk.DAL.Entities;
@@ -17,6 +21,7 @@ using SmartHelpdesk.DAL.Repository;
 using SmartHelpdesk.DAL.Seed;
 using System.Security.Claims;
 using System.Text;
+using System.Windows.Input;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -198,9 +203,13 @@ builder.Services.AddSingleton<
 builder.Services.AddScoped<
     IAuthorizationHandler,
     PermissionAuthorizationHandler>();
+
 builder.Services.AddScoped<
     IProfileImageService,
     ProfileImageService>();
+
+builder.Services.AddScoped<ICommandHandler<CreateTicketCommand, int>, CreateTicketHandler>();
+builder.Services.AddScoped<IQueryHandler<GetTicketByIdQuery, TicketResponseDto?>, GetTicketByIdHandler>();
 
 #endregion
 
