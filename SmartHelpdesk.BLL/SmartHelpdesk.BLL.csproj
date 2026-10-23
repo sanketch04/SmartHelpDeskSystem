@@ -12,4 +12,9 @@
 	<FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Tickets\Commands\" />
+    <Folder Include="Features\Tickets\Queries\" />
+  </ItemGroup>
+
 </Project>

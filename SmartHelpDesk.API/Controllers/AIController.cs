@@ -65,14 +65,13 @@ public class AIController : ControllerBase
                 StatusCodes.Status503ServiceUnavailable,
                 new { message = "The AI service timed out. Please try again." });
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
         {
-            _logger.LogError(
-                ex, "Unable to connect to the local AI service.");
+            _logger.LogWarning(ex, "AI rate limit reached.");
 
             return StatusCode(
-                StatusCodes.Status503ServiceUnavailable,
-                new { message = "The local AI service is unavailable. Ensure Ollama is running." });
+                StatusCodes.Status429TooManyRequests,
+                new { message = "AI limit reached. Please wait a minute and try again." });
         }
         catch (JsonException ex)
         {

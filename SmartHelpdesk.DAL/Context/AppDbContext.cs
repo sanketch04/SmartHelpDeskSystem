@@ -129,6 +129,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(ticket => ticket.AssignedToUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+        
 
         #endregion
 

@@ -2,8 +2,6 @@
 using SmartHelpdesk.Common.DTOs.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SmartHelpdesk.BLL.Interfaces;
-using SmartHelpdesk.Common.DTOs.Auth;
 
 namespace SmartHelpdesk.API.Controllers;
 
@@ -29,6 +27,7 @@ public class AuthController : ControllerBase
     #region Admin Test
 
     [Authorize(Policy = "AdministratorOnly")]
+    
     [HttpGet("admin-test")]
     public IActionResult AdminTest()
     {
