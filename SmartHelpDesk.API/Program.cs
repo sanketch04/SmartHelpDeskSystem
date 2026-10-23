@@ -90,17 +90,23 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<ITicketHistoryRepository,TicketHistoryRepository>();
+string aiApiKey = builder.Configuration["AiService:ApiKey"] ?? string.Empty;
+
+if (string.IsNullOrWhiteSpace(aiApiKey))
+{
+    throw new InvalidOperationException("AiService:ApiKey must be configured.");
+}
+
 builder.Services.AddHttpClient<IAiTicketService, AiTicketService>(
     (serviceProvider, client) =>
     {
-        var configuration = serviceProvider
-            .GetRequiredService<IConfiguration>();
+        var configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
-        var ollamaUrl = configuration["AiService:BaseUrl"]
-            ?? "http://localhost:11434/";
+        var baseUrl = configuration["AiService:BaseUrl"] ?? "https://generativelanguage.googleapis.com/";
 
-        client.BaseAddress = new Uri(ollamaUrl);
-        client.Timeout = TimeSpan.FromSeconds(120);
+        client.BaseAddress = new Uri(baseUrl);
+        client.DefaultRequestHeaders.Add("x-goog-api-key", aiApiKey);
+        client.Timeout = TimeSpan.FromSeconds(60);
     });
 
 

@@ -1,5 +1,4 @@
-﻿
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using SmartHelpdesk.BLL.Interfaces;
@@ -11,8 +10,12 @@ public class AiTicketService : IAiTicketService
 {
     #region Constants
 
-    private const string ModelName = "qwen2.5:3b";
-    private const string ChatEndpoint = "api/chat";
+    // If Google retires this model, check AI Studio for the current
+    // free "Flash" model name and change only this line.
+    private const string ModelName = "gemini-3.5-flash";
+
+    private static readonly string GenerateEndpoint =
+        $"v1beta/models/{ModelName}:generateContent";
 
     private static readonly HashSet<string> AllowedPriorities =
         new(StringComparer.OrdinalIgnoreCase)
@@ -48,10 +51,9 @@ public class AiTicketService : IAiTicketService
 
     #region Public Methods
 
-    public async Task<AITicketClassificationResponseDto>
-        ClassifyTicketAsync(
-            AITicketClassificationRequestDto request,
-            CancellationToken cancellationToken = default)
+    public async Task<AITicketClassificationResponseDto> ClassifyTicketAsync(
+        AITicketClassificationRequestDto request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -88,23 +90,31 @@ public class AiTicketService : IAiTicketService
             {request.Description.Trim()}
             """;
 
+        // Gemini API shape:
+        //  - system prompt   -> systemInstruction
+        //  - ticket text     -> contents[].parts[].text
+        //  - JSON enforcing  -> generationConfig.responseMimeType
         var payload = new
         {
-            model = ModelName,
-            stream = false,
-            format = "json",
-            messages = new[]
+            systemInstruction = new
+            {
+                parts = new[] { new { text = systemPrompt } }
+            },
+            contents = new[]
             {
                 new
                 {
-                    role = "system",
-                    content = systemPrompt
-                },
-                new
-                {
                     role = "user",
-                    content = ticketContent
+                    parts = new[] { new { text = ticketContent } }
                 }
+            },
+            generationConfig = new
+            {
+                temperature = 0,
+                responseMimeType = "application/json",
+                // Generous limit: some Gemini models also count their
+                // internal "thinking" tokens against this number.
+                maxOutputTokens = 2048
             }
         };
 
@@ -116,38 +126,59 @@ public class AiTicketService : IAiTicketService
             "application/json");
 
         using var httpResponse = await _httpClient.PostAsync(
-            ChatEndpoint,
+            GenerateEndpoint,
             content,
             cancellationToken);
 
         httpResponse.EnsureSuccessStatusCode();
 
         await using var responseStream =
-            await httpResponse.Content.ReadAsStreamAsync(
-                cancellationToken);
+            await httpResponse.Content.ReadAsStreamAsync(cancellationToken);
 
-        using var ollamaResponse = await JsonDocument.ParseAsync(
+        using var apiResponse = await JsonDocument.ParseAsync(
             responseStream,
             cancellationToken: cancellationToken);
 
-        if (!ollamaResponse.RootElement.TryGetProperty(
-                "message",
-                out var messageElement) ||
-            !messageElement.TryGetProperty(
-                "content",
-                out var contentElement))
+        // Response shape:
+        // { "candidates": [ { "content": { "parts": [ { "text": "..." } ] } } ] }
+        if (!apiResponse.RootElement.TryGetProperty(
+                "candidates",
+                out var candidates) ||
+            candidates.ValueKind != JsonValueKind.Array ||
+            candidates.GetArrayLength() == 0)
         {
             throw new InvalidOperationException(
-                "Ollama returned an unexpected response.");
+                "The AI service returned no result (it may have been blocked).");
         }
 
-        var generatedJson = contentElement.GetString();
+        var firstCandidate = candidates[0];
 
-        if (string.IsNullOrWhiteSpace(generatedJson))
+        if (!firstCandidate.TryGetProperty("content", out var contentElement) ||
+            !contentElement.TryGetProperty("parts", out var partsElement) ||
+            partsElement.ValueKind != JsonValueKind.Array)
         {
             throw new InvalidOperationException(
-                "Ollama returned an empty classification.");
+                "The AI service returned an unexpected response.");
         }
+
+        string? generatedText = null;
+
+        foreach (var part in partsElement.EnumerateArray())
+        {
+            if (part.TryGetProperty("text", out var textElement))
+            {
+                generatedText = textElement.GetString();
+                break;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(generatedText))
+        {
+            throw new InvalidOperationException(
+                "The AI service returned an empty classification.");
+        }
+
+        var generatedJson = ExtractJsonObject(generatedText);
 
         var result =
             JsonSerializer.Deserialize<AITicketClassificationResponseDto>(
@@ -199,6 +230,27 @@ public class AiTicketService : IAiTicketService
         }
 
         return result;
+    }
+
+    #endregion
+
+    #region Private Methods
+
+    // Safety net: even with JSON mode on, keep only what is between
+    // the first '{' and the last '}' in case extra text or ```json
+    // fences sneak in.
+    private static string ExtractJsonObject(string text)
+    {
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+
+        if (start < 0 || end <= start)
+        {
+            throw new InvalidOperationException(
+                "The AI response did not contain a JSON object.");
+        }
+
+        return text.Substring(start, end - start + 1);
     }
 
     #endregion

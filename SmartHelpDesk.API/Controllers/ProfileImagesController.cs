@@ -21,8 +21,7 @@ namespace SmartHelpdesk.API.Controllers
 
         #region Ctor
 
-        public ProfileImagesController(
-            UserManager<ApplicationUser> userManager,
+        public ProfileImagesController(UserManager<ApplicationUser> userManager,
             IProfileImageService profileImageService,
             ILogger<ProfileImagesController> logger)
         {
@@ -111,9 +110,7 @@ namespace SmartHelpdesk.API.Controllers
                 }
 
                 // Remove the previous image only after the DB update succeeds.
-                await _profileImageService.DeleteAsync(
-                    previousImageUrl,
-                    cancellationToken);
+                await _profileImageService.DeleteAsync(previousImageUrl,cancellationToken);
 
                 return Ok(new
                 {

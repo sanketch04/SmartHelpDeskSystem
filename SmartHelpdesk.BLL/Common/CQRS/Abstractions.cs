@@ -1,4 +1,10 @@
-﻿namespace SmartHelpdesk.BLL.Common.CQRS;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace SmartHelpdesk.BLL.Common.CQRS;
 public interface ICommand<TResult>{}
 public interface IQuery<TResult>{ }
 
